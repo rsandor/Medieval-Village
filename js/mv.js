@@ -1,5 +1,5 @@
 (function() {
-  var Game, GameObject, Images, Reality;
+  var Castle, Game, GameObject, Grid, Images, Monolith, Trees;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -8,47 +8,6 @@
     child.__super__ = parent.prototype;
     return child;
   };
-  Images = (function() {
-    var images, list;
-    function Images() {}
-    images = {};
-    list = ['reality.jpg'];
-    Images.load = function(callback) {
-      var remaining, src, _i, _len, _results;
-      remaining = list.length;
-      _results = [];
-      for (_i = 0, _len = list.length; _i < _len; _i++) {
-        src = list[_i];
-        images[src] = new Image();
-        images[src].onload = function() {
-          if (--remaining === 0) {
-            return callback();
-          }
-        };
-        _results.push(images[src].src = "images/" + src);
-      }
-      return _results;
-    };
-    Images.get = function(name) {
-      return images[name];
-    };
-    return Images;
-  })();
-  GameObject = (function() {
-    function GameObject() {
-      var _ref;
-      _ref = [0, 0], this.x = _ref[0], this.y = _ref[1];
-      this.image = null;
-    }
-    GameObject.prototype.update = function() {};
-    GameObject.prototype.draw = function(g) {
-      if (!this.image) {
-        return;
-      }
-      return g.drawImage(this.image, this.x, this.y);
-    };
-    return GameObject;
-  })();
   Game = (function() {
     var attributes, canvas, draw, g, game_loop, images, objects, update;
     function Game() {}
@@ -107,26 +66,113 @@
     };
     return Game;
   })();
-  Reality = (function() {
-    __extends(Reality, GameObject);
-    function Reality() {
-      var _ref;
-      Reality.__super__.constructor.call(this);
-      _ref = [10, 10], this.dx = _ref[0], this.dy = _ref[1];
-      this.image = 'reality.jpg';
-    }
-    Reality.prototype.update = function() {
-      this.x += this.dx;
-      this.y += this.dy;
-      if (this.x + this.image.width > Game.attr('width') || this.x < 0) {
-        this.dx *= -1;
+  Images = (function() {
+    var images, list;
+    function Images() {}
+    images = {};
+    list = ['reality.jpg', 'grid.png', 'castle.png', 'trees.png', 'monolith.png'];
+    Images.load = function(callback) {
+      var remaining, src, _i, _len, _results;
+      remaining = list.length;
+      _results = [];
+      for (_i = 0, _len = list.length; _i < _len; _i++) {
+        src = list[_i];
+        images[src] = new Image();
+        images[src].onload = function() {
+          if (--remaining === 0) {
+            return callback();
+          }
+        };
+        _results.push(images[src].src = "images/" + src);
       }
-      if (this.y + this.image.height > Game.attr('height') || this.y < 0) {
-        return this.dy *= -1;
+      return _results;
+    };
+    Images.get = function(name) {
+      return images[name];
+    };
+    return Images;
+  })();
+  GameObject = (function() {
+    function GameObject(x, y, image, ox, oy) {
+      this.x = x != null ? x : 0;
+      this.y = y != null ? y : 0;
+      this.image = image != null ? image : null;
+      this.ox = ox != null ? ox : 0;
+      this.oy = oy != null ? oy : 0;
+      return;
+    }
+    GameObject.prototype.update = function() {};
+    GameObject.prototype.draw = function(g) {
+      if (this.image != null) {
+        return g.drawImage(this.image, this.x + this.ox, this.y + this.oy);
       }
     };
-    return Reality;
+    return GameObject;
   })();
-  Game.add(new Reality());
+  Grid = (function() {
+    __extends(Grid, GameObject);
+    function Grid() {
+      Grid.__super__.constructor.call(this, 80, 80, 'grid.png');
+    }
+    Grid.prototype.draw = function(g) {
+      var x, y, _results;
+      _results = [];
+      for (x = 0; x < 20; x++) {
+        _results.push((function() {
+          var _results2;
+          _results2 = [];
+          for (y = 0; y < 30; y++) {
+            _results2.push(g.drawImage(this.image, x * this.image.width, y * this.image.height));
+          }
+          return _results2;
+        }).call(this));
+      }
+      return _results;
+    };
+    return Grid;
+  })();
+  Castle = (function() {
+    __extends(Castle, GameObject);
+    function Castle() {
+      Castle.__super__.constructor.call(this, 64, 96, 'castle.png', 0, 8);
+    }
+    return Castle;
+  })();
+  Monolith = (function() {
+    __extends(Monolith, GameObject);
+    function Monolith() {
+      Monolith.__super__.constructor.call(this, 128, 256, 'monolith.png', 0, 6);
+    }
+    return Monolith;
+  })();
+  Trees = (function() {
+    __extends(Trees, GameObject);
+    function Trees() {
+      var i;
+      Trees.__super__.constructor.call(this, 0, 0, 'trees.png');
+      this.roots = [];
+      for (i = 0; i < 100; i++) {
+        this.roots.push({
+          x: (Math.random() * Game.attr('width')) | 0,
+          y: (Math.random() * Game.attr('height')) | 0
+        });
+      }
+    }
+    Trees.prototype.draw = function(g) {
+      var loc, _i, _len, _ref, _results;
+      _ref = this.roots;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        loc = _ref[_i];
+        _results.push(g.drawImage(this.image, loc.x, loc.y));
+      }
+      return _results;
+    };
+    return Trees;
+  })();
+  Game.add(new Grid());
+  Game.add(new Castle());
+  Game.add(new Monolith());
+  Game.add(new Trees());
   $(Game.start);
 }).call(this);

@@ -3,33 +3,10 @@
 # A game by Thomas O'Neil and Ryan Richards
 #
 
-class Images
-	images = {}
-	list = ['reality.jpg']
-	
-	@load = (callback) ->
-		remaining = list.length
-		for src in list 
-			images[src] = new Image()
-			images[src].onload = -> callback() if --remaining == 0
-			images[src].src = "images/#{src}"
-	
-	@get = (name) ->
-		images[name]
-	
 
-class GameObject
-	constructor: ->
-		[@x, @y] = [0, 0]
-		@image = null
-	
-	update: -> return
-	
-	draw: (g) ->
-		return unless @image
-		g.drawImage @image, @x, @y
-
-
+#
+# Main Game
+#
 class Game
 	attributes =
 		width: 640
@@ -64,23 +41,79 @@ class Game
 	@add: (object) -> objects.push object
 	@attr: (name) -> attributes[name]
 
-		
-class Reality extends GameObject
-	constructor: ->
-		super()
-		[@dx, @dy] = [10, 10]
-		@image = 'reality.jpg'
-		
-	update: ->
-		@x += @dx
-		@y += @dy
-		@dx *= -1 if @x + @image.width > Game.attr('width') or @x < 0
-		@dy *= -1 if @y + @image.height > Game.attr('height') or @y < 0
+
+#
+# Image preloader
+#
+class Images
+	images = {}
+	list = [
+		'reality.jpg',
+		'grid.png',
+		'castle.png',
+		'trees.png',
+		'monolith.png'
+	]
 	
+	@load = (callback) ->
+		remaining = list.length
+		for src in list 
+			images[src] = new Image()
+			images[src].onload = -> callback() if --remaining == 0
+			images[src].src = "images/#{src}"
+	
+	@get = (name) ->
+		images[name]
+
+#	
+# Basic game object class
+#
+class GameObject
+	constructor: (@x=0, @y=0, @image=null, @ox=0, @oy=0) -> return
+	update: -> return
+	draw: (g) -> g.drawImage(@image, @x + @ox, @y + @oy) if @image?
+		
+
+class Grid extends GameObject
+	constructor: ->
+		super 80, 80, 'grid.png'
+		
+	draw: (g) ->
+		for x in [0...20]
+			for y in [0...30]
+				g.drawImage @image, x * @image.width, y * @image.height
 
 
-Game.add new Reality()
 
+class Castle extends GameObject
+	constructor: ->
+		super 64, 96, 'castle.png', 0, 8
+
+
+class Monolith extends GameObject
+	constructor: -> super 128, 256, 'monolith.png', 0, 6
+
+class Trees extends GameObject
+	constructor: ->
+		super 0, 0, 'trees.png'
+		@roots = []
+		for i in [0...100]
+			@roots.push
+				x: (Math.random() * Game.attr('width')) | 0
+				y: (Math.random() * Game.attr('height')) | 0 
+			
+	draw: (g) ->
+		for loc in @roots
+			g.drawImage @image, loc.x, loc.y
+		
+			
+			
+
+
+Game.add new Grid()
+Game.add new Castle()
+Game.add new Monolith()
+Game.add new Trees()
 
 # Start the game!
 $ Game.start
