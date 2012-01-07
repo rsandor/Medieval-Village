@@ -1,0 +1,3 @@
+To build the game:
+
+coffee -wc -o js/ mv.coffee
