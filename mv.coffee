@@ -3,6 +3,20 @@
 # A game by Thomas O'Neil and Ryan Richards
 #
 
+class Images
+	images = {}
+	list = ['reality.jpg']
+	
+	@load = (callback) ->
+		remaining = list.length
+		for src in list 
+			images[src] = new Image()
+			images[src].onload = -> callback() if --remaining == 0
+			images[src].src = "images/#{src}"
+	
+	@get = (name) ->
+		images[name]
+	
 
 class GameObject
 	constructor: ->
@@ -16,59 +30,57 @@ class GameObject
 		g.drawImage @image, @x, @y
 
 
-class MedievalVillage
-	[WIDTH, HEIGHT, FPS] = [640, 480, 30]
+class Game
+	attributes =
+		width: 640
+		height: 480
+		fps: 30
+	
 	canvas = null
 	g = null
-	
 	images = {}
-	reality = new GameObject()
 	
-	create_canvas = ->
-		canvas = $ ['<canvas width="', WIDTH, '" height="', HEIGHT, '"></canvas>'].join ''
-		g = canvas.get(0).getContext '2d'
-		$('body').append canvas
-	
-	load_images = (list, callback) ->
-		remaining = list.length
-		for src in list 
-			images[src] = new Image()
-			images[src].onload = -> callback() if --remaining == 0
-			images[src].src = "images/#{src}"
+	objects = []
 	
 	update = ->
-		reality.update()
+		o.update() for o in objects
 	
 	draw = ->
-		g.clearRect 0, 0, WIDTH, HEIGHT
-		reality.draw(g)
+		g.clearRect 0, 0, attributes.width, attributes.height
+		o.draw(g) for o in objects
 	
-	game_loop = ->
-		update()
-		draw()
+	game_loop = -> update(); draw()
 	
-	# Initializes the game and starts the main game loop
 	@start: ->
-		create_canvas()
-		load_images ['reality.jpg'], ->
-			reality.image = images['reality.jpg']
-			reality.update = ->
-				@dx ?= 10
-				@dy ?= 10
-				@x += @dx
-				@y += @dy
-				@dx *= -1 if @x + @image.width > WIDTH or @x < 0
-				@dy *= -1 if @y + @image.height > HEIGHT or @y < 0
-
-			setInterval game_loop, 1000/FPS
-
-
+		canvas = $ ['<canvas width="', attributes.width, '" height="', attributes.height, '"></canvas>'].join ''
+		g = canvas.get(0).getContext '2d'
+		$('body').append canvas
+		Images.load ->
+			
+			for o in objects
+				o.image = Images.get(o.image) if typeof o.image == 'string'
+			setInterval game_loop, 1000 / attributes.fps
+		
+	@add: (object) -> objects.push object
+	@attr: (name) -> attributes[name]
 
 		
-	
+class Reality extends GameObject
+	constructor: ->
+		super()
+		[@dx, @dy] = [10, 10]
+		@image = 'reality.jpg'
 		
+	update: ->
+		@x += @dx
+		@y += @dy
+		@dx *= -1 if @x + @image.width > Game.attr('width') or @x < 0
+		@dy *= -1 if @y + @image.height > Game.attr('height') or @y < 0
 	
+
+
+Game.add new Reality()
 
 
 # Start the game!
-$ MedievalVillage.start
+$ Game.start
